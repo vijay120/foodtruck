@@ -1,4 +1,9 @@
+var socket = io();
+
 var x = document.getElementById("demo");
+
+var map;
+
 
 function showError(error) {
   switch(error.code) {
@@ -29,13 +34,20 @@ function showPosition(position) {
 
 	var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 
-    var mapOptions = {
-      center: myLatlng,
-      zoom: 16
-    };
+  socket.emit('latlong', position.coords.latitude.toString() + 
+                          ',' + position.coords.longitude.toString());
 
-    var map = new google.maps.Map(document.getElementById('map-canvas'),
-      mapOptions); 
+  var base_url = 'https://data.sfgov.org/resource/rqzj-sfat.json?$where=';
+  base_url += 'latitude > ' + position.coords.latitude.toString();
+
+
+  var mapOptions = {
+    center: myLatlng,
+    zoom: 16
+  };
+
+  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions); 
+
 
     var contentString = '<div id="content">'+
       '<div id="siteNotice">'+
@@ -75,4 +87,37 @@ function showPosition(position) {
 
 google.maps.event.addDomListener(window, 'load', getLocation);
 
+socket.on('results', function(foodTrucks) {
+  var arrayOfFoodTrucks = JSON.parse(foodTrucks);
+  arrayOfFoodTrucks.forEach(function (element) {
+
+    var myLatlng = new google.maps.LatLng(element.latitude, element.longitude);
+
+    var contentString = '<div id="content">'+
+      '<div id="siteNotice">'+
+      '</div>'+
+      '<h1 id="firstHeading" class="firstHeading">'+
+      element.applicant + 
+      '</h1>'+
+      '<div id="bodyContent">'+
+      '<p>'+
+      element.locationdescription+
+      element.fooditems+
+      '</p></div></div';
+
+    var infowindow = new google.maps.InfoWindow({
+      content: contentString
+    }); 
+
+    var marker = new google.maps.Marker({
+      position: myLatlng,
+        map: map,
+        title: element.applicant
+    });
+
+    google.maps.event.addListener(marker, 'click', function() {
+      infowindow.open(map, marker);
+    });
+  });
+});
 
