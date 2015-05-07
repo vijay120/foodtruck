@@ -26,30 +26,26 @@ var io = require('socket.io')(server);
 io.on('connection', function(socket){
   socket.on('latlong', function(latLong) {
     var longLongArray = latLong.split(',');
-    var latitude = longLongArray[0];
-    var longitude = longLongArray[1];
-    var baseUrl = 'https://data.sfgov.org/resource/rqzj-sfat.json?$where=';
-    baseUrl += 'latitude > ' + latitude + ' AND ' + 'longitude > ' + longitude;
 
-    // console.log('kk');
-    // io.emit('msg', "nice");
-    // console.log('whutwhut');
+    var latitude = parseFloat(longLongArray[0]);
+    var longitude = parseFloat(longLongArray[1]);
+
+    var maxLat = latitude + 0.5;
+    var minLat = latitude - 0.5;
+
+    var maxLong = longitude + 0.5;
+    var minLong = longitude - 0.5;
+
+
+    var baseUrl = 'https://data.sfgov.org/resource/rqzj-sfat.json?$where=';
+    baseUrl += 'latitude < ' + maxLat + ' AND '
+              + 'latitude > ' + minLat + ' AND '
+              + 'longitude < ' + maxLong + ' AND '
+              + 'longitude > ' + minLong;
 
     request(baseUrl, function (error, response, body) {
-
       if (!error && response.statusCode == 200) {
-        console.log('here!!');
         io.to(socket.id).emit('results', body);
-
-        // var arrayOfFoodTrucks = JSON.parse(body);
-
-        // arrayOfFoodTrucks.forEach(function (element) {
-        //   console.log(element.latitude);
-        //   console.log(element.longitude);
-        //   console.log(element.applicant);
-        //   console.log(element.locationdescription);
-        //   console.log(element.fooditems);
-        // });
       }
     })
 
