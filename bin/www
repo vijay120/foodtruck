@@ -8,6 +8,7 @@ var app = require('../app');
 var debug = require('debug')('foodtruck:server');
 var http = require('http');
 var request = require('request');
+var latLongConverter = require('../latLongToUrlConverter');
 
 /**
  * Get port from environment and store in Express.
@@ -25,30 +26,17 @@ var io = require('socket.io')(server);
 
 io.on('connection', function(socket){
   socket.on('latlong', function(latLong) {
-    var longLongArray = latLong.split(',');
 
-    var latitude = parseFloat(longLongArray[0]);
-    var longitude = parseFloat(longLongArray[1]);
+    //request SF data for trucks nearby
+    var requestUrl = latLongConverter.convertLatLongToAPIUrl(latLong);
 
-    var maxLat = latitude + 0.5;
-    var minLat = latitude - 0.5;
-
-    var maxLong = longitude + 0.5;
-    var minLong = longitude - 0.5;
-
-
-    var baseUrl = 'https://data.sfgov.org/resource/rqzj-sfat.json?$where=';
-    baseUrl += 'latitude < ' + maxLat + ' AND '
-              + 'latitude > ' + minLat + ' AND '
-              + 'longitude < ' + maxLong + ' AND '
-              + 'longitude > ' + minLong;
-
-    request(baseUrl, function (error, response, body) {
+    request(requestUrl, function (error, response, body) {
       if (!error && response.statusCode == 200) {
+
+        //send results of the api call to the client
         io.to(socket.id).emit('results', body);
       }
     })
-
   });
 });
 
