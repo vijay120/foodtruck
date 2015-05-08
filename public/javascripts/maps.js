@@ -41,8 +41,8 @@ function getLocation() {
 // This function calculates the user's geolocated position and returns
 // results based on that.
 function showMyPosition(position) {
-	var myLatLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
-      myLatLng = new google.maps.LatLng('37.7770972708968645787', '-122.415102651361645787');
+	var myLatLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+  // use this for test value: myLatLng = new google.maps.LatLng('37.7770972708968645787', '-122.415102651361645787');
 
   var mapOptions = {
     center: myLatLng,
