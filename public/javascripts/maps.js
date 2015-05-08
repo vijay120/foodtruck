@@ -1,37 +1,45 @@
 var socket = io();
 
-// This is the way the user will know what the app is currently doing.
-var status = document.getElementById("status");
-
 // This is the map element that will be embedded onto the app.
 var map;
 
+// Update the status bar with content
+function updateStatusBar(content) {
+  console.log('content is ', content);
+  document.getElementById("status").innerHTML = content;
+}
+
+// This function propogates errors to the status bar
 function showError(error) {
   switch(error.code) {
       case error.PERMISSION_DENIED:
-          status.innerHTML = "User denied the request for Geolocation."
+          updateStatusBar('User denied the request for Geolocation.');
           break;
       case error.POSITION_UNAVAILABLE:
-          status.innerHTML = "Location information is unavailable."
+          updateStatusBar('Location information is unavailable.');
           break;
       case error.TIMEOUT:
-          status.innerHTML = "The request to get user location timed out."
+          updateStatusBar('The request to get user location timed out.');
           break;
       case error.UNKNOWN_ERROR:
-          status.innerHTML = "An unknown error occurred."
+          updateStatusBar('An unknown error occurred.');
           break;
   }
 }
 
+// This function is driver that prompts the user if he/she wants to use
+// geolocation.
 function getLocation() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showMyPosition, showError);
-        status.innerHTML = "Calculating food trucks near you...";
+      updateStatusBar("Calculating food trucks near you...");
+      navigator.geolocation.getCurrentPosition(showMyPosition, showError);
     } else {
-        status.innerHTML = "Geolocation is not supported by this browser.";
+      updateStatusBar("Geolocation is not supported by this browser.");
     }
 }
 
+// This function calculates the user's geolocated position and returns
+// results based on that.
 function showMyPosition(position) {
 	var myLatLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
       myLatLng = new google.maps.LatLng('37.7770972708968645787', '-122.415102651361645787');
@@ -56,6 +64,22 @@ function showMyPosition(position) {
   socket.emit('latlong', position.coords.latitude + ',' + position.coords.longitude);
 }
 
+function renderTruckHTMLSnippet(truckResult) {
+  // This conditional is specifically to sanitize and format the food items result
+  if (truckResult.fooditems) {
+    truckResult.fooditems = truckResult.fooditems.replace(/:/g, ',');
+  } else {
+    truckResult.fooditems = ''
+  }
+
+  var contentString = '<div id="content"><div id="siteNotice"></div>' +
+      '<h1 id="firstHeading" class="firstHeading">' + truckResult.applicant + '</h1>' +
+      '<div id="bodyContent">' + '<p><b>Address</b>: ' + truckResult.locationdescription + '</p>' + 
+      '<p><b>Food Items</b>: ' + truckResult.fooditems + '</p></p></div></div';
+
+  return contentString;
+}
+
 // Once the window is loaded, get the location of the user.
 google.maps.event.addDomListener(window, 'load', getLocation);
 
@@ -63,28 +87,16 @@ google.maps.event.addDomListener(window, 'load', getLocation);
 socket.on('results', function(foodTrucks) {
 
   var arrayOfFoodTrucks = JSON.parse(foodTrucks);
+  updateStatusBar('Found ' + arrayOfFoodTrucks.length + ' trucks near you');
 
   arrayOfFoodTrucks.forEach(function (element) {
 
     var foodTruckLatLng = new google.maps.LatLng(element.latitude, element.longitude);
 
-    var contentString = '<div id="content">'+
-      '<div id="siteNotice">'+
-      '</div>'+
-      '<h1 id="firstHeading" class="firstHeading">'+
-      element.applicant + 
-      '</h1>'+
-      '<div id="bodyContent">'+
-      '<p><b>Address</b>: '+
-      element.locationdescription+
-      '</p>'+ 
-      '<p><b>Food Items</b>: '+
-      element.fooditems.replace(/:/g, ',') +
-      '</p>'+ 
-      '</p></div></div';
+    var renderedContent = renderTruckHTMLSnippet(element);
 
     var infowindow = new google.maps.InfoWindow({
-      content: contentString
+      content: renderedContent
     });
 
     var truckImage = 'images/truck.png';
@@ -99,7 +111,4 @@ socket.on('results', function(foodTrucks) {
       infowindow.open(map, marker);
     });
   });
-
-  status.innerHTML = "Finished.";
 });
-
