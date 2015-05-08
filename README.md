@@ -73,7 +73,7 @@ testing and linting around playful code.
 
 That said, I do love this project: https://github.com/vijay120/boxdrop
 
-I do because people use it (its a google extension) and it learnt the internals of the OAuth2.0 
+I do because people use it (its a google extension) and I learnt the internals of the OAuth2.0 
 code flow.
 
 Resume
