@@ -87,7 +87,7 @@ google.maps.event.addDomListener(window, 'load', getLocation);
 socket.on('results', function(foodTrucks) {
 
   var arrayOfFoodTrucks = JSON.parse(foodTrucks);
-  updateStatusBar('Found ' + arrayOfFoodTrucks.length + ' trucks near you');
+  updateStatusBar('Found ' + arrayOfFoodTrucks.length + ' food trucks');
 
   arrayOfFoodTrucks.forEach(function (element) {
 
